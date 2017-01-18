@@ -22,7 +22,7 @@ var getOnePageOfFeed = function(page, nextUrlString) {
   outputStatus();
 
   var pageId = page.id;
-  if (!nextUrlString) nextUrlString = '';
+  if (!nextUrlString) nextUrlString = '&limit=25&until=' + Math.round(new Date().getTime());
 
   graph.get("/" + pageId + "/feed?fields=picture,link,id,message,name,from,created_time,type,object_id,full_picture,permalink_url,shares,caption,description,comments.limit(100).filter(stream),likes.limit(0).summary(true),reactions.limit(0).summary(true)" + nextUrlString, function(err, res) {
     var posts = res.data;
