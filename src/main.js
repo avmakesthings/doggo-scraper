@@ -1,5 +1,14 @@
 const graph = require('fbgraph');
 const fs = require('fs');
+const flatfile = require('flat-file-db');
+
+var flatFileName = './data/posts.db';
+
+if (! fs.existsSync(flatFileName)) {
+  var db = flatfile(flatFileName);
+} else {
+  var db = flatfile.sync(flatFileName);
+}
 
 var searchTermsByPage = {};
 var matchingPosts = [];
@@ -23,6 +32,7 @@ var getOnePageOfFeed = function(page, nextUrlString) {
 
   var pageId = page.id;
   if (!nextUrlString) nextUrlString = '&limit=25&until=' + Math.round(new Date().getTime());
+  console.log(nextUrlString);
 
   graph.get("/" + pageId + "/feed?fields=picture,link,id,message,name,from,created_time,type,object_id,full_picture,permalink_url,shares,caption,description,comments.limit(100).filter(stream),likes.limit(0).summary(true),reactions.limit(0).summary(true)" + nextUrlString, function(err, res) {
     var posts = res.data;
@@ -31,7 +41,7 @@ var getOnePageOfFeed = function(page, nextUrlString) {
       console.log("\n\n\n***********************\n\nNo posts found for " + page.name);
     } else {
       var paging = res.paging;
-      var nextUrl = res.paging.next;;
+      var nextUrl = res.paging.next;
       var nextUrlChunks = nextUrl.split("&limit=");
 
       // looks like we have more pages of the feed to fetch;
@@ -84,7 +94,13 @@ var processPostsBatch = function(page, posts, urlPaginationString) {
     }
 
     if (isMatchingPost) {
+      if (db.has(post.id)) {
+        console.log('already have post in db - ' + post.id);
+        continue;
+      }
+
       post.matchReasons = matchReasons.join("!@#$%");
+      post.pageId = page.id;
 
       // flatten post data for insertion into DB
       post.commentsCount = post.comments.data.length;
@@ -103,6 +119,7 @@ var processPostsBatch = function(page, posts, urlPaginationString) {
       post.fromId = post.from.id;
       delete post.from;
 
+      db.put(post.id, JSON.stringify(post));
       matchingPosts.push(post);
     }
   }
