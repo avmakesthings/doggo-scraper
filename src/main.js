@@ -1,8 +1,11 @@
 const graph = require('fbgraph');
 const fs = require('fs');
 const flatfile = require('flat-file-db');
+const path = require('path');
 
-var flatFileName = './data/posts.db';
+var workingDirectory = path.resolve(__dirname);
+
+var flatFileName = workingDirectory + '/../data/posts.db';
 
 if (! fs.existsSync(flatFileName)) {
   var db = flatfile(flatFileName);
@@ -12,8 +15,9 @@ if (! fs.existsSync(flatFileName)) {
 
 var searchTermsByPage = {};
 var matchingPosts = [];
+var numDupes = 0;
 
-var jsonLocation = "../../fb-api-keys/doggo-scraper.json";
+var jsonFileLocation = workingDirectory + "/../../fb-api-keys/doggo-scraper.json";
 
 if (!!process.env.FB_API_TOKEN) {
     var token = process.env.FB_API_TOKEN;
@@ -32,11 +36,11 @@ if (!token) {
   process.exit(0);
 }
 
-graph.setAccessToken("" + appCredentials.appId + "|" + appCredentials.appSecret);
+graph.setAccessToken(token);
 
 var outputStatus = function() {
-  console.log('running another posts batch, current cached data is: (' + matchingPosts.length + ') matching posts');
-  console.log(JSON.stringify(matchingPosts, null, 2));
+  console.log('running another posts batch, current cached data is: ' + matchingPosts.length + ' matching posts, ' + numDupes + ' dupes found (already in DB)');
+  // console.log(JSON.stringify(matchingPosts, null, 2));
 };
 
 var getFeed = function(page, searchTerms) {
@@ -50,7 +54,7 @@ var getOnePageOfFeed = function(page, nextUrlString) {
 
   var pageId = page.id;
   if (!nextUrlString) nextUrlString = '&limit=25&until=' + Math.round(new Date().getTime());
-  console.log(nextUrlString);
+  // console.log(nextUrlString);
 
   graph.get("/" + pageId + "/feed?fields=picture,link,id,message,name,from,created_time,type,object_id,full_picture,permalink_url,shares,caption,description,comments.limit(100).filter(stream),likes.limit(0).summary(true),reactions.limit(0).summary(true)" + nextUrlString, function(err, res) {
     var posts = res.data;
@@ -114,6 +118,7 @@ var processPostsBatch = function(page, posts, urlPaginationString) {
     if (isMatchingPost) {
       if (db.has(post.id)) {
         console.log('already have post in db - ' + post.id);
+        numDupes++;
         continue;
       }
 
