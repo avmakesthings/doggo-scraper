@@ -13,7 +13,25 @@ if (! fs.existsSync(flatFileName)) {
 var searchTermsByPage = {};
 var matchingPosts = [];
 
-var appCredentials = require('../../fb-api-keys/doggo-scraper.json');
+var jsonLocation = "../../fb-api-keys/doggo-scraper.json";
+
+if (!!process.env.FB_API_TOKEN) {
+    var token = process.env.FB_API_TOKEN;
+} else  {
+  if (!!process.env.FB_APP_ID && !!process.env.FB_APP_SECRET) {
+    var appCredentials = {appId: process.env.FB_APP_ID, appSecret: process.env.FB_APP_SECRET};
+  } else if (fs.existsSync(jsonFileLocation)) {
+    var appCredentials = require(jsonFileLocation);
+  }
+
+  if (!!appCredentials) var token = "" + appCredentials.appId + "|" + appCredentials.appSecret;
+}
+
+if (!token) {
+  console.log("No API token available, exiting");
+  process.exit(0);
+}
+
 graph.setAccessToken("" + appCredentials.appId + "|" + appCredentials.appSecret);
 
 var outputStatus = function() {
