@@ -1,0 +1,10 @@
+{{#doggosByPage}}
+  <div class='page'>
+    <h1>
+      All doggos on {{name}} matching for <em>{{tag}}</em>
+    </h1>
+  </div>
+  {{#doggos}}
+    {{> doggo}}
+  {{/doggos}}
+{{/doggosByPage}}

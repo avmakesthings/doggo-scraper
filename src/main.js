@@ -91,6 +91,7 @@ var processPostsBatch = function(page, posts, urlPaginationString) {
 
     var isMatchingPost = false;
     var matchReasons = [];
+    var matchReasonComments = [];
 
     for (var commentIndex = 0; commentIndex < comments.length; commentIndex++) {
       var comment = comments[commentIndex];
@@ -110,7 +111,8 @@ var processPostsBatch = function(page, posts, urlPaginationString) {
 
         if (_commentText.indexOf(searchTerm) !== -1) {
           isMatchingPost = true;
-          matchReasons.push(commentText);
+          matchReasons.push(searchTerm);
+          matchReasonComments.push(commentText);
         }
       }
     }
@@ -123,6 +125,7 @@ var processPostsBatch = function(page, posts, urlPaginationString) {
       }
 
       post.matchReasons = matchReasons.join("!@#$%");
+      post.matchReasonComments = matchReasons.join("!@#$%");
       post.pageId = page.id;
 
       // flatten post data for insertion into DB
